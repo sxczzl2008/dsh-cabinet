@@ -428,20 +428,18 @@ function syncPluginToProfile() {
   }
 
   const pluginVer = JSON.parse(fs.readFileSync(path.join(PLUGIN_ROOT, 'package.json'), 'utf8')).version || '0.1.0';
-  const basePatchBak = path.join(BACKUP_DIR, 'cordis.patch.yml.formal.bak');
-  const patchFile = path.join(FORMAL_PROFILE, 'cordis.patch.yml');
-  const basePatch = fs.existsSync(basePatchBak) ? fs.readFileSync(basePatchBak, 'utf8') : fs.readFileSync(patchFile, 'utf8');
-  const cabinetBlock = [
-    '',
-    '# >>> dsh-cabinet >>>',
-    '- insert:',
-    '    - id: cabinet-v2',
-    `      name: ${JSON.stringify(path.join(destDir, 'lib/index.js'))}`,
-    `      config: ${JSON.stringify({ dataRoot: path.join(FORMAL_HOME, 'cabinet-v2') })}`,
-    '# <<< dsh-cabinet <<<',
-    ''
-  ].join('\n');
-  fs.writeFileSync(patchFile, basePatch.trimEnd() + '\n' + cabinetBlock, 'utf8');
+  const desktopPkgFile = path.join(FORMAL_PROFILE, 'package.json');
+  if (fs.existsSync(desktopPkgFile)) {
+    const pkg = JSON.parse(fs.readFileSync(desktopPkgFile, 'utf8'));
+    pkg.dependencies = pkg.dependencies || {};
+    pkg.dependencies['dsh-cabinet'] = pluginVer;
+    pkg.dsh = pkg.dsh || {};
+    pkg.dsh.profile = pkg.dsh.profile || {};
+    const bundles = Array.isArray(pkg.dsh.profile.bundles) ? pkg.dsh.profile.bundles : [];
+    if (!bundles.includes('dsh-cabinet')) bundles.push('dsh-cabinet');
+    pkg.dsh.profile.bundles = bundles;
+    fs.writeFileSync(desktopPkgFile, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+  }
   return { destDir, pluginVer };
 }
 
