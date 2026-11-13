@@ -1,0 +1,4 @@
+# dsh-cabinet — bundle patch layer
+- insert:
+    - id: cabinet-v2
+      name: dsh-cabinet

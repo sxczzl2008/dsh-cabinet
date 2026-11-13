@@ -1,0 +1,58 @@
+{
+  "name": "dsh-cabinet",
+  "version": "0.1.0",
+  "description": "Multi-model Cabinet orchestration plugin for DeepSeek Harness (DSH) — visual drag-and-drop bubble seat assignment, master/session configuration inheritance, dual-review automated pipeline, and 3-color narrow status dashboard.",
+  "license": "MIT",
+  "author": "Helios <sxczzl2008@gmail.com>",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "scripts",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cabinet",
+    "multi-agent",
+    "multi-model",
+    "orchestrator",
+    "workflow",
+    "dashboard",
+    "code-review",
+    "agent-team"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js",
+    "install-plugin": "node scripts/patch-host.cjs --install",
+    "uninstall-plugin": "node scripts/patch-host.cjs --uninstall"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sxczzl2008/dsh-cabinet.git"
+  },
+  "homepage": "https://github.com/sxczzl2008/dsh-cabinet#readme",
+  "bugs": {
+    "url": "https://github.com/sxczzl2008/dsh-cabinet/issues"
+  }
+}
