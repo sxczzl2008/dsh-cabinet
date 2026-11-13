@@ -37,7 +37,7 @@ const DSH_ENV = resolveDshEnvironment();
 const FORMAL_ASAR = DSH_ENV.formalAsar;
 const FORMAL_HOME = DSH_ENV.formalHome;
 const FORMAL_PROFILE = DSH_ENV.formalProfile;
-const EXPECTED_BASE_SHA = '5FA8A6B21BCEB8F3E99E30EFA2270EFD0CC773A11E42AA0488F804A64B34E637';
+const EXPECTED_BASE_SHA = '14CFD81C9135BF0AFB89417543C94F9ECFE09266574452A9B106890C698725AE';
 
 const PATHS = {
   sessionController: 'dsh/node_modules/@deepseek-ai/dsh-api-session-controller/lib/index.js',
@@ -444,36 +444,6 @@ function syncPluginToProfile() {
 }
 
 function installCabinet() {
-  const backupAsar = path.join(BACKUP_DIR, 'app.asar.formal.bak');
-  const sourceAsarPath = fs.existsSync(backupAsar) ? backupAsar : FORMAL_ASAR;
-  const baseArchive = open(sourceAsarPath);
-  const bridge = fs.readFileSync(path.join(UI_DIR, 'client-bridge.js'), 'utf8');
-
-  const replacements = new Map();
-  replacements.set(
-    PATHS.sessionController,
-    Buffer.from(patchSessionController(baseArchive.read(PATHS.sessionController).toString('utf8')), 'utf8')
-  );
-
-  const uiEntries = [
-    [PATHS.modelSelection, patchModelSelection],
-    [PATHS.settingsPlugins, patchSettingsSection],
-    [PATHS.layout, patchLayout],
-    [PATHS.sidebarRight, patchSidebarRight],
-    [PATHS.chat, patchChat]
-  ];
-  for (const [file, fn] of uiEntries) {
-    const raw = baseArchive.read(file).toString('utf8');
-    const code = bridge + ';\n' + fn(raw);
-    new vm.Script(code, { filename: file });
-    replacements.set(file, Buffer.from(code, 'utf8'));
-  }
-
-  const built = pack(baseArchive, replacements);
-  const tempAsar = FORMAL_ASAR + `.tmp-${process.pid}`;
-  fs.writeFileSync(tempAsar, built);
-  fs.renameSync(tempAsar, FORMAL_ASAR);
-
   const profileSync = syncPluginToProfile();
   const result = {
     action: 'install',
@@ -481,30 +451,28 @@ function installCabinet() {
     version: profileSync.pluginVer,
     pluginRepo: PLUGIN_ROOT,
     installedPluginDir: profileSync.destDir,
-    formalAsarSha256: hash(fs.readFileSync(FORMAL_ASAR))
+    mode: 'pure-bundle-external'
   };
   console.log(JSON.stringify(result, null, 2));
   return result;
 }
 
 function rollbackHostToVanilla() {
-  const backupAsar = path.join(BACKUP_DIR, 'app.asar.formal.bak');
-  const backupPatch = path.join(BACKUP_DIR, 'cordis.patch.yml.formal.bak');
-  const backupPkg = path.join(BACKUP_DIR, 'package.json.formal.bak');
-  if (!fs.existsSync(backupAsar) || hash(fs.readFileSync(backupAsar)) !== EXPECTED_BASE_SHA) {
-    throw new Error('原始正式 ASAR 备份缺失或哈希不匹配');
+  const desktopPkgFile = path.join(FORMAL_PROFILE, 'package.json');
+  if (fs.existsSync(desktopPkgFile)) {
+    const pkg = JSON.parse(fs.readFileSync(desktopPkgFile, 'utf8'));
+    if (pkg.dependencies) delete pkg.dependencies['dsh-cabinet'];
+    if (pkg.dsh?.profile?.bundles && Array.isArray(pkg.dsh.profile.bundles)) {
+      pkg.dsh.profile.bundles = pkg.dsh.profile.bundles.filter(b => b !== 'dsh-cabinet');
+    }
+    fs.writeFileSync(desktopPkgFile, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
   }
-  const tempAsar = FORMAL_ASAR + `.rollback-${process.pid}`;
-  fs.copyFileSync(backupAsar, tempAsar);
-  fs.renameSync(tempAsar, FORMAL_ASAR);
-  if (fs.existsSync(backupPatch)) fs.copyFileSync(backupPatch, path.join(FORMAL_PROFILE, 'cordis.patch.yml'));
-  if (fs.existsSync(backupPkg)) fs.copyFileSync(backupPkg, path.join(FORMAL_PROFILE, 'package.json'));
   fs.rmSync(path.join(FORMAL_PROFILE, 'node_modules/dsh-cabinet'), { recursive: true, force: true });
   fs.rmSync(path.join(FORMAL_PROFILE, 'node_modules/cabinet-v2-host'), { recursive: true, force: true });
   const result = {
     action: 'uninstall-to-vanilla',
     at: new Date().toISOString(),
-    restoredAsarSha256: hash(fs.readFileSync(FORMAL_ASAR))
+    mode: 'pure-bundle-external'
   };
   console.log(JSON.stringify(result, null, 2));
   return result;
