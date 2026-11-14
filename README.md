@@ -5,16 +5,16 @@
 
 ---
 
-## 一、 插件解决什么问题（核心功能摘要）
+## 一、 主要功能
 
 | 功能模块 | 说明 |
 | --- | --- |
-| **零重复配置选模** | 直接扫描并复用你在 DSH「设置 → 模型」中已配置好的全部本地与云端模型（DeepSeek、Claude、Gemini、本地常驻模型等），无需重复填写 API 密钥或接口地址。 |
-| **纯鼠标气泡拖拽排席** | 点选模型生成气泡，拖入 **1～9 个工作席**（支持同列动态增减席位）或右侧独立的**秘书席（可选）**，再将「设计席 / 施工席 / 审验席」与「组长 / 组员 / 独立」标签拖入模型卡片即可完成分工，支持一键切换推理档位（如 `max` / `high`）。 |
-| **母本 ↔ 子代双层配置** | 在「**设置 → 内阁模式**」独立设置页保存**全局默认方案（母本）**，新开启内阁模式的对话自动继承；在单个对话内可随时独立调整排席（**子代**）而不影响其他对话；若对当前子代排席满意，点击弹窗底部的 **「一键设为默认配置」** 即可直接升格为全局母本。 |
-| **代码级全自动工作流** | 主对话发送任务后，代码自动按阶段调度：同职务 ≥2 人（含 1 组长 + 组员）时自动建独立组内对话开会并由组长汇总提交，1 人独立时直接在主对话履职；审验退回时自动触发返工复审，不依赖模型手工传话。 |
-| **320px 窄状态栏与宽幅阅读层** | 对话右侧挂出简洁的窄版 Dashboard，以**红（需人工排障）/ 黄（思考讨论中）/ 绿（成果已转交）**三色进度条实时反映各工作组进度；支持点开宽幅阅读层围观组内讨论、查看工具执行结果、一步发送补充指令、单独停止某组或停止全部工作。 |
-| **岗位经验继承与模型记忆隔离** | 内置 `设计 / 施工 / 审验 / 秘书` 四类岗位经验库与按精确型号隔离的模型记忆库；更换模型接任秘书或工作席时自动继承对应岗位规范，且不同模型的专属记忆互不串用。 |
+| **直接用已有模型** | 直接读取你在 DSH「设置 → 模型」里已经配好的本地和云端模型，不用再填一遍 API 密钥或接口地址。 |
+| **鼠标拖拽排座位** | 点选模型生成气泡，拖进 **1～9 个工作席** 或右边的 **秘书席（可选）**，再把「设计席 / 施工席 / 审验席」和「组长 / 组员 / 独立」标签拖过去就能分好工，也可以直接选推理档位（如 `max` / `high`）。 |
+| **默认方案与单次对话方案** | 在「**设置 → 内阁模式**」里可以保存一套平时最常用的默认排座方案（母本），新开内阁对话会自动带入；在具体某次对话里也能单独改排座（子代），不影响其他对话；觉得当前排法顺手，点左下角 **「一键设为默认配置」** 就能存成默认方案。 |
+| **按流程推进工作** | 主对话发出任务后，按 `设计 → 设计审验 → 施工 → 施工审验 → 交付 + 秘书简报` 的顺序往下走：同一个职务有 2 个以上模型时，会建一个组内对话先商量再由组长交稿，只有 1 个模型时直接在主对话干活；审验没通过会自动退回重做。 |
+| **右侧状态栏与阅读窗** | 对话右边有一栏 320px 宽的状态条，用 **红（出错需处理）/ 黄（正在思考或讨论）/ 绿（已完成交稿）** 标出各组进度；点开可以查看组内讨论和工具运行结果，也能中途补发指令、单独停掉某一组或者全部停下。 |
+| **岗位经验与模型记忆分开存** | 按 `设计 / 施工 / 审验 / 秘书` 四个岗位存公共经验，按模型型号存各自的习惯记录；换别的模型来当秘书或干活时能直接接着用岗位经验，不同模型自己的记忆也不会混在一起。 |
 
 ---
 
@@ -36,27 +36,22 @@
 
 ---
 
-## 三、 安装、版本发布与事故回滚
+## 三、 安装、卸载与版本回滚
 
-插件脚本会自动探测当前系统的 `DSH_HOME` 与 DSH 安装目录（也支持通过环境变量 `$env:DSH_HOME`、`$env:DSH_APP_DIR` 指定）：
+脚本会自动查找当前系统的 `DSH_HOME` 和 DSH 安装目录（也可以用环境变量 `$env:DSH_HOME`、`$env:DSH_APP_DIR` 指定）：
 
 ```powershell
-# 1. 查看当前仓库状态与已发布版本标签
-pwsh -File "./scripts/Manage-Cabinet-Plugin.ps1" -Action Status
+# 1. 查看当前仓库状态与已有版本标签
+pwsh -File "<plugin-dir>/scripts/Manage-Cabinet-Plugin.ps1" -Action Status
 
-# 2. 将当前插件版本安装/同步至本机 DSH 并重启生效
-pwsh -File "./scripts/Manage-Cabinet-Plugin.ps1" -Action Install
+# 2. 安装或更新插件到本机 DSH
+pwsh -File "<plugin-dir>/scripts/Manage-Cabinet-Plugin.ps1" -Action Install
 
-# 3. 迭代新功能后一键发布新版本（自动更新 package.json、写入 CHANGELOG.md、打 Git Tag 并推送到 GitHub）
-pwsh -File "./scripts/Manage-Cabinet-Plugin.ps1" -Action Publish -Version "0.2.0" `
-  -Added "新增跨工作组结论对比视图" `
-  -Changed "优化窄窗口下状态卡片间距"
+# 3. 回滚到指定的历史版本标签（如 v0.1.3）
+pwsh -File "<plugin-dir>/scripts/Manage-Cabinet-Plugin.ps1" -Action Rollback -Version "v0.1.3"
 
-# 4. 开发出事故时，一键回滚到任意历史稳定版本（如 v0.1.0）并立即重装生效
-pwsh -File "./scripts/Manage-Cabinet-Plugin.ps1" -Action Rollback -Version "v0.1.0"
-
-# 5. 卸载插件并还原官方原版 DSH
-pwsh -File "./scripts/Manage-Cabinet-Plugin.ps1" -Action Uninstall
+# 4. 卸载插件
+pwsh -File "<plugin-dir>/scripts/Manage-Cabinet-Plugin.ps1" -Action Uninstall
 ```
 
 ---
@@ -65,25 +60,25 @@ pwsh -File "./scripts/Manage-Cabinet-Plugin.ps1" -Action Uninstall
 
 ```text
 dsh-cabinet/
-├── package.json                  # DSH 标准插件包清单与检索关键词
-├── cordis.patch.yml              # DSH Profile 服务挂载声明
-├── README.md                     # 插件功能摘要与使用维护文档
-├── CHANGELOG.md                  # 历次版本新增内容与修改内容台账
+├── package.json                  # 插件包信息
+├── cordis.patch.yml              # 服务挂载配置
+├── README.md                     # 使用说明
+├── CHANGELOG.md                  # 版本更新记录
 ├── lib/
-│   ├── index.js / index.mjs      # 插件后端 Cordis 服务主入口（HTTP/SSE 路由、admit 自动入口）
-│   ├── client.js                 # 插件前端设置页入口（注册左侧独立「内阁模式」设置页）
-│   ├── model-catalog.mjs         # 宿主模型目录动态读取与事件订阅
-│   ├── llm-bridge.mjs            # 宿主 ctx.llm.prepareCall / stream 统一流式调用与上下文预算保护
-│   ├── orchestrator.mjs          # 单人/多人混编自动状态机、双审验返工、组级停止与一步插令
-│   ├── session-manager.mjs       # 主对话/组内对话存储与宿主原生工具（含 Windows-MCP）权限装配
-│   ├── memory-router.mjs         # 岗位经验库与模型独立记忆库代码级路由
+│   ├── index.js / index.mjs      # 后端服务入口与 HTTP/SSE 路由
+│   ├── client.js                 # 设置页「内阁模式」前端入口
+│   ├── model-catalog.mjs         # 读取 DSH 已配置的模型列表
+│   ├── llm-bridge.mjs            # 模型调用与上下文长度控制
+│   ├── orchestrator.mjs          # 内阁各阶段流转、审验退回与中途插话控制
+│   ├── session-manager.mjs       # 主对话与组内对话管理
+│   ├── memory-router.mjs         # 岗位经验与模型记忆读取
 │   └── ui/
-│       ├── client-bridge.js      # 前端实时状态同步通信桥
-│       ├── canvas-editor.js      # 响应式气泡拖拽配置画布
-│       ├── dashboard-sidebar.js  # 右侧 320px 窄版三色状态栏
-│       └── reader-dialog.js      # 宽幅组内讨论与工具结果阅读层
+│       ├── client-bridge.js      # 前后端状态同步
+│       ├── canvas-editor.js      # 气泡拖拽排座界面
+│       ├── dashboard-sidebar.js  # 右侧 320px 状态栏
+│       └── reader-dialog.js      # 组内讨论与工具结果阅读窗
 └── scripts/
-    ├── Manage-Cabinet-Plugin.ps1 # 一键安装、结构化发版记录、版本回滚与卸载脚本
-    ├── patch-host.cjs            # 跨路径自动探测与宿主轻量菜单接缝装配器
-    └── asar-lib.cjs              # ASAR 归档读写工具
+    ├── Manage-Cabinet-Plugin.ps1 # 安装、回滚与卸载脚本
+    ├── patch-host.cjs            # 宿主安装脚本
+    └── asar-lib.cjs              # ASAR 读写工具
 ```
