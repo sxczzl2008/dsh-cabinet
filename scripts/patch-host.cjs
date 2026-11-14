@@ -12,15 +12,13 @@ const BACKUP_DIR = path.join(PLUGIN_ROOT, 'backups/formal-baseline');
 function resolveDshEnvironment() {
   const homeCandidates = [
     process.env.DSH_HOME,
-    'E:/DSH/home',
     path.join(os.homedir(), '.dsh')
   ].filter(Boolean);
   const formalHome = homeCandidates.find(p => fs.existsSync(path.join(p, 'profiles/desktop'))) || homeCandidates[0];
 
   const appCandidates = [
     process.env.DSH_APP_DIR,
-    'E:/Program Files/DeepSeek Harness',
-    'C:/Program Files/DeepSeek Harness',
+    path.join(process.env.ProgramFiles || '', 'DeepSeek Harness'),
     path.join(process.env.LOCALAPPDATA || '', 'Programs/DeepSeek Harness')
   ].filter(Boolean);
   const appDir = appCandidates.find(p => fs.existsSync(path.join(p, 'resources/app.asar'))) || appCandidates[0];

@@ -25,8 +25,7 @@ function Stop-RunningDsh {
 function Start-FormalDsh {
   $candidates = @(
     ( & { if ($env:DSH_APP_DIR) { Join-Path $env:DSH_APP_DIR 'DeepSeek Harness.exe' } } ),
-    'E:\Program Files\DeepSeek Harness\DeepSeek Harness.exe',
-    'C:\Program Files\DeepSeek Harness\DeepSeek Harness.exe',
+    (Join-Path $env:ProgramFiles 'DeepSeek Harness\DeepSeek Harness.exe'),
     (Join-Path $env:LOCALAPPDATA 'Programs\DeepSeek Harness\DeepSeek Harness.exe')
   ) | Where-Object { $_ -and (Test-Path -LiteralPath $_) }
   if ($candidates.Count -gt 0) {
