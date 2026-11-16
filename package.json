@@ -1,7 +1,7 @@
 {
   "name": "dsh-cabinet",
-  "version": "0.1.4",
-  "description": "Multi-model Cabinet orchestration plugin for DeepSeek Harness (DSH) — visual drag-and-drop bubble seat assignment, master/session configuration inheritance, dual-review automated pipeline, and 3-color narrow status dashboard.",
+  "version": "0.2.0",
+  "description": "DeepSeek Harness 多模型内阁协作插件：气泡拖拽排座、母本与单任务配置、设计施工审验流程、组聊调度与右侧状态栏。",
   "license": "MIT",
   "author": "Helios <sxczzl2008@gmail.com>",
   "type": "module",
@@ -33,6 +33,9 @@
   ],
   "engines": {
     "node": ">=22"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-session": "0.2.2-rc.3"
   },
   "scripts": {
     "check": "node --check lib/index.js",
