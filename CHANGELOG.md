@@ -4,6 +4,17 @@
 
 ---
 
+## v0.3.0 (2026-11-20)
+
+### 架构升级 (Changed)
+- **嫁接 DSH 官方智能体团队底座**：改用官方 `@deepseek-ai/dsh-subagent`（原生子智能体连续会话、工具执行与结构化审验结果捕获）和 `@deepseek-ai/dsh-agent-team`（官方共享任务板自动建卡与依赖管理），彻底替换自研流式调用、工具循环与手写 JSON 组聊对账层。
+- **改用官方 `agent/pre-step` 瀑布流拦截**：废弃对 `agent.followup` / `agent.steer` 的 monkey-patch 与手写 `turn/start`、`user/message` 原生事件，由官方 `AgentLoop` 自己管理 `turn` 编号和 `surface` 首节点，同时静默过滤内阁子智能体发回的 `subagent-settled` 通知，杜绝主会话误唤醒和重启加载报 `SessionFormatError`。
+- **主对话收口与历史对话回看**：中间各工作组讨论保留在各自独立子会话中，主对话仅呈交初始任务与最终秘书总结/阻断提示；新增基于会话事件流与 `history-index.json` 的历史任务重建，退出内阁后仍可在输入框「内阁」药丸、右侧「内阁」面板或配置弹窗中一键进入各成员、审验裁决与秘书的独立子会话。
+- **抗升级兼容改造**：`package.json` 放宽 `engines.dsh` 与 `peerDependencies` 至 `>=0.2.0`（适配 DSH `0.2.2-rc.5` 及后续版本）；客户端新增主输入框工具栏常驻「内阁」入口药丸，并将全部 slot 与可选服务注册拆为逐项独立隔离。
+- **保留全部内阁核心能力**：保留气泡拖拽异构排座、全局母本与单任务子代配置、双审验与退回流程、本地模型显存串行保护，以及按席位自动注入 `dsh-work-handbook`（岗位手册）和 `dsh-persona-vault`（拟似人格）。
+
+---
+
 ## v0.2.0 (2026-11-17)
 
 ### 新增与完善 (Added)

@@ -65,13 +65,11 @@ dsh-cabinet/
 ├── README.md                     # 使用说明
 ├── CHANGELOG.md                  # 版本更新记录
 ├── lib/
-│   ├── index.js / index.mjs      # 后端服务入口、任务管理与 HTTP/SSE 路由
+│   ├── index.js / index.mjs      # 后端服务入口、任务配置与 HTTP/SSE 路由
 │   ├── client.js                 # 前端设置页、任务配置弹窗、状态栏与报告阅读窗
+│   ├── team-runtime.mjs          # 对接官方 subagents / agentTeams / systemPrompt 底座
+│   ├── orchestrator.mjs          # 内阁阶段流转、审验退回与中途插话控制
 │   ├── model-catalog.mjs         # 读取 DSH 已配置的模型列表
-│   ├── llm-bridge.mjs            # 模型调用、日志补料排除与本地模型排队
-│   ├── main-context.mjs          # 组长与独立席按需读取主对话公开上下文
-│   ├── orchestrator.mjs          # 内阁各阶段流转、审验退回与中途插话控制
-│   ├── session-manager.mjs       # 主对话、原生组聊及工具记录管理
 │   └── memory-router.mjs         # 岗位经验、模型记忆与外置手册/人格插件联动
 └── scripts/
     ├── Manage-Cabinet-Plugin.ps1 # 安装、回滚与卸载脚本

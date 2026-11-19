@@ -1,6 +1,6 @@
 {
   "name": "dsh-cabinet",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DeepSeek Harness 多模型内阁协作插件：气泡拖拽排座、母本与单任务配置、设计施工审验流程、组聊调度与右侧状态栏。",
   "license": "MIT",
   "author": "Helios <sxczzl2008@gmail.com>",
@@ -32,10 +32,11 @@
     "agent-team"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "dsh": ">=0.2.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-session": "0.2.2-rc.3"
+    "@deepseek-ai/dsh-session": ">=0.2.0"
   },
   "scripts": {
     "check": "node --check lib/index.js",
