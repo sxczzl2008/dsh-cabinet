@@ -4,6 +4,14 @@
 
 ---
 
+## v0.6.2 (2026-11-21)
+
+### 修复与增强 (Fixed & Changed)
+- **思考档位 400 协议不兼容自动降级自愈**：在 `TeamRuntime` 中新增 `isThinkingParameterRejection` 精确识别中转网关对 `thinking` / `reasoning_effort` / `adaptive thinking` / `between_tools` 的 400 拒绝报错；命中时当场剥离 `reasoningEffort`（`omit thinking`）单次重发并记入进程内 `effortFallbackModels` 缓存，后续阶段直接免参数直通（非思考类错误绝不重试）。
+- **清理 `claude-sonnet-5-5` 固定档位**：移除 `cordis.patch.yml` 中 `lanyiapi/claude-sonnet-5-5` 过时的 `low` 声明，并将母本 `saved-plan.json` 对应席位归零为「默认」档位。
+
+---
+
 ## v0.6.1 (2026-11-21)
 
 ### 修复 (Fixed)
