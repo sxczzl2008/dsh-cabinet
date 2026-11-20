@@ -1,6 +1,6 @@
 {
   "name": "dsh-cabinet",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "DeepSeek Harness 多模型内阁协作插件：五大预设模式、平行盲写与一对一盲审、思考档位拉杆、右侧齿轮翻转标签、分片施工硬工具围栏与双层三次熔断保护。",
   "license": "MIT",
   "author": "Helios <sxczzl2008@gmail.com>",
