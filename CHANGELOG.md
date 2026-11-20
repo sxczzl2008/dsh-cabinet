@@ -4,6 +4,15 @@
 
 ---
 
+## v0.6.1 (2026-11-21)
+
+### 修复 (Fixed)
+- **修复内阁右侧边栏白屏崩溃**：补齐 `renderDashboardFooter` 遗漏传递 `bridge` 参数并在剪枝/分支树子组件内增加 `globalThis.__dshCabinetV2` 兜底，消除 `ReferenceError: bridge is not defined` 导致内阁面板一片空白的故障；同步在 `snapshot()` 中对未缓存会话做首次初始化，保证重启后历史内阁状态正常回显。
+- **修复「停止全部工作」按钮点击无效/闪回**：在 `TeamRuntime` 中实时登记正在派生的活跃子会话 ID（`activeChildIdsByParent`），将 `activation.result` 包装为与 `AbortSignal` 竞速短路（收到停止立即抛出 `TASK_STOPPED`），并在 `stopAll` / `endTask` 时立即释放 `taskControllers` 控制锁、向所有活跃子会话下发 `interrupt`，彻底解决卡慢席位阻塞编排器导致界面状态弹回 `running` 的问题。
+- **防只读席位工具死循环**：在只读设计/规划席位系统提示词中增加最多不超过 5 次只读检索即收敛出稿的硬约束。
+
+---
+
 ## v0.6.0 (2026-11-21)
 
 ### 新增内容 (Added)
