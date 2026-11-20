@@ -52,7 +52,7 @@ function syncPluginToProfile(homeDir = DEFAULT_HOME) {
   if (fs.existsSync(desktopPkgFile)) {
     const pkg = JSON.parse(fs.readFileSync(desktopPkgFile, 'utf8'));
     pkg.dependencies = pkg.dependencies || {};
-    pkg.dependencies['dsh-cabinet'] = pluginVer;
+    pkg.dependencies['dsh-cabinet'] = `file:${PLUGIN_ROOT.replace(/\\/g, '/')}`;
     pkg.dsh = pkg.dsh || {};
     pkg.dsh.profile = pkg.dsh.profile || {};
     const bundles = Array.isArray(pkg.dsh.profile.bundles) ? pkg.dsh.profile.bundles : [];
