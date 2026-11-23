@@ -4,11 +4,133 @@
 
 ---
 
+## v0.9.0 (2026-11-24)
+
+### 新增与调整 (Added & Changed)
+- **精简 UI 入口，释放二级菜单空间**：
+  - 移除模型下拉二级菜单（`conversation.input.model.options`）中重复的「内阁模式」入口，对话内统一仅保留主输入框底部的「单模型 · 切内阁」药丸按钮，二级菜单空间留给工作手册与拟似人格。
+- **动态解耦席位扩展协议（`__dshCabinetSeatExtensions` + `MemoryRouter` 动态透传）**：
+  - 在工作席与秘书席的「思考档位」下方、职责栏上方预留动态插件扩展挂点；未安装/未启用外置扩展插件时完全不渲染占位，安装外置插件（如 `dsh-work-handbook`）后自动热挂载，按席位独立配置并默认「未挂载」，两边独立升级互不破坏；
+  - 秘书席宽度由 `232px` 扩展至 `clamp(268px, 25%, 296px)`（至少与工作席同等甚至略大），九宫格工作席轻微缩窄以保证三列稳排且为秘书席留足装载空间。
+- **各内阁模式独立快照模板（`presetSnapshots`）**：
+  - 母本存储 `saved-plan.json` 升级为按预设模式独立保存设定快照（含模型、思考档位、篇幅、工作手册挂载等 `seatExtensions`）；
+  - 画布预设栏新增「存为本模式模板 / 更新本模式模板」与「空白排席」按钮，切换任意模式时自动一键套用已保存的专属模板，方便直接复用到各个子对话中。
+
+---
+
+## v0.8.8 (2026-11-24)
+
+### 修复 (Fixed)
+- **修复空闲子智能体卸载重载导致保底轮询误读上一轮旧 `turn/end` 的 Bug**：
+  - [team-runtime.mjs](lib/team-runtime.mjs) 废弃发消息前统计旧 `turn/end` 数量的脆弱基线（子智能体被 DSH 卸载后基线归零，重载后 1.5 秒即误把第 1 轮旧结果/旧报错当成第 2 轮已结束），改为以**发消息时间戳 `sendStartedAt` + 尾部事件闭合态（最后一条 turn 事件为 `turn/end`）+ `seq` 增量**三重锚定，彻底杜绝提前误判与连环打断。
+
+---
+
+## v0.8.7 (2026-11-24)
+
+### 修复与增强 (Fixed & Changed)
+- **修复复用子席位（`sendMessage`）网络报错导致内阁永久卡死的问题**：
+  - [team-runtime.mjs](lib/team-runtime.mjs) 在复用已有子会话继续执行时，`subagent/end` 同步兼容 `id / childId / sessionId`，并新增 1.5 秒轻量双通道保底检测（监控子会话新增 `turn/end` 与主会话 `subagent-settled` 通知），即便子会话遭遇 `TRANSPORT / fetch failed` 等异常且宿主未按常规触发 `subagent/end`，也能立刻结算退出，不再死等；同时补齐 `trackChild` 登记，确保「停止全部工作」可及时中断复用席位。
+- **补齐全部组长与施工审验员的「报错标红跳过 / 降级继续推进」容错**：
+  - [orchestrator.mjs](lib/orchestrator.mjs) 中设计审验组长、施工审验组长报错时自动标红跳过并沿用审验员已定性的裁决继续推进；设计组长合稿报错时自动标红跳过并降级交由秘书席合稿（或结构化打包）；多席并发施工审验同样支持单席报错标红跳过、其余健康席位继续验收。
+- **顶层异常收口复位黄条与渲染优化**：
+  - 发生无法降级的异常中断时自动将所有残留运行态黄条复位并向主对话输出明确受阻提示卡，不再假装运行；将侧边栏进度条 `@keyframes cabinetSlide` 移入全局一次性 `CSS`，消除每次重渲染反复插入 `<style>` 的无谓开销。
+
+---
+
+## v0.8.6 (2026-11-24)
+
+### 修复与增强 (Fixed & Changed)
+- **根治内阁最终汇报被吞进「已完成，用时 1 秒 ∨」折叠栏的问题，单独设立正式输出区**：
+  - **前端顶层独立锚定**：将 `uiConversation` 注册的内阁汇报卡（`nativeRelayKind`）与子会话席位发言卡（`nativeSpeechKind`）的视图位置固定为顶层 `{ kind: "unresolved" }`，不再随日志写入瞬间的空壳 `turn/start..turn/end` 被 DSH 归入思维链/调用折叠条；既有历史内阁对话重启后即可直接展开显示完整汇报；
+  - **后端避开空壳 Turn 竞态**：[team-runtime.mjs](lib/team-runtime.mjs) 在复用已有子席位（如秘书二次汇总定稿）走 `sendMessage` 时尝试 `delivery: 'caller'`，且 `appendMainAssistantMessage` 写入 `plugin:cabinet-v2/presentation` 前自动等待正在进行的空壳 `turn/start` 闭合至 `turn/end` 后再落盘，确保正式输出永远写在 Turn 之外；
+  - **独立正式输出区视觉与相对路径链接渲染**：为内阁汇报卡增加独立的 `.dcab-formal-output` 正式输出顶栏（带「内阁正式输出」标识与席位模型标注），清晰区分于单模型思维链与调用记录；同步支持将 `[result.txt](<_smoke_test/result.txt>)` 等本地相对路径 Markdown 链接渲染为带完整路径悬浮提示的文件名标签。
+
+---
+
+## v0.8.5 (2026-11-24)
+
+### 新增与修复 (Added & Fixed)
+- **内阁消息与报告全面支持 GFM Markdown 渲染**：
+  - 在 [client.js](lib/client.js) 内新增零外部依赖的 `CabinetMarkdown` React 渲染组件与配套样式（支持标题 `H1~H6`、GFM 表格对齐与宽表横向滚动、围栏代码块与一键复制、行内代码、加粗/斜体/删除线、引用块、嵌套与任务列表、水平分隔线及安全链接），并兼容模型在中文括号后加空格导致的 `**... **` 边界写法；
+  - 将主对话内阁汇报卡（`CabinetV2NativeRelay` 及剪枝原版对比区）、子会话席位发言卡（`CabinetV2NativeSpeech`）以及侧边栏「阅读报告 / 交付成果」弹窗统一接入该渲染器，原有历史汇报刷新即生效，点击「剪枝」编辑时仍保持原始 Markdown 源码。
+
+---
+
+## v0.8.4 (2026-11-23)
+
+### 修复与增强 (Fixed & Changed)
+- **修复物理分支 `session/title` 事件协议报错（`SessionFormatError: title messageSeqs requires an array`）**：
+  - 补齐新分支合成 `session/title` 事件的完整 DSH v4 结构（`{ title, messageSeqs: [], source: { kind: 'user' } }`），对齐宿主原生用户重命名事件格式，确保 `sessionController.resolveAgent` 顺利加载并校验通过；
+  - 复制前缀事件进入新分支时，自动将历史 `plugin:cabinet-v2/*` 事件中的 `data.sessionId` 重写为新分支 ID；前端内阁消息卡与汇报卡同步改为优先绑定当前会话 ID，防止在分支内浏览或编辑早期历史消息时误指原主对话。
+- **补全普通单模型分支锚点回填与前端切换重试**：
+  - `BranchTreeStore` 记录前缀事件数 `prefixEventCount`，`snapshot()` 在普通单模型分支走 `followup` / `sessionController.prompt` 异步落盘后自动按 ID 或最小序号回填 `branchAnchorSeq` 与 `branchMessageId`，并在后台补推一次状态，确保单模型与内阁双模式的 `◀ X / Y ▶` 切换条均能稳定显示；
+  - 失败回滚时同步调用 `sessionPersistence.delete` 清理内存缓存；前端 `openSession` 在遇到浏览器侧会话列表同步延迟时自动重试并刷新原/新双分支快照。
+
+---
+
+## v0.8.3 (2026-11-23)
+
+### 修复与架构完善 (Fixed & Changed)
+- **彻底对齐 DSH 原生多帧 Zstd 日志格式（修复物理分支 `session persistence holds no such session`）**：
+  - 将物理分支写入从单一大帧 Zstd 改为严格匹配 DSH 原生协议的**多帧 Zstd 流**（`encodeMultiFrameZstd`：第 0 帧单独仅压缩约 180 字节的顶层 `session` 头行，后续事件按小批次分帧写入），彻底解决宿主 `readZstdPrefix` / `readFirstZstdLine` 解码前缀失败导致 `entity.attachSession` 与 `sessionController.resolveAgent` 拒收新分支的问题；
+  - 写入后依次刷新 `sessionPersistence`（`mapSessionDirectories` / `list` / `exists` / `findLog`）、同步 `workspaceRegistry.indexHeader` + `entity.attachSession` 并调用 `sessions.prepare`，完整贯通宿主三层会话注册链路。
+- **全模式分支接续与前端实时看板同步**：
+  - 编辑历史消息分叉时，若当前会话刚调整过内阁排席或篇幅开关，新分支自动沿用最新配置；若已切回单模型并编辑早期内阁消息，则自动恢复分叉点时的内阁配置；普通单模型分支兼容 `agent.followup` 与 `sessionController.prompt` 兜底；
+  - 切换或新开分支后自动刷新目标分支快照与右侧内阁进度面板，确保 `◀ X / Y ▶` 与实时执行进度同步到位。
+
+---
+
+## v0.8.2 (2026-11-23)
+
+### 修复与增强 (Fixed & Changed)
+- **修复物理分支挂接工作区与前端切换报错（`sessions.retain: unknown session`）**：
+  - 后端补齐 `workspaceRegistry` 与 `sessionPersistence` 服务注入，修正工作区挂接参数（传入 `workspaceId` 而非 `sourceSessionId`），写盘后主动触发 `sessionPersistence.list()` / `sessions.open()` 刷新宿主索引；
+  - 去除 `forkBranch` 静默吞错：若挂工作区或 `sessionController.resolveAgent` 拉起分支失败，立即回滚清理临时目录、不写入 `branch-trees.json`、落盘 `host-api-diag.json` 接口诊断并直接向界面返回明确报错，彻底杜绝假分支与点不动的 `1 / 2`；
+  - 前端分叉后改为异步等待 `sessions.refresh()` 与 `workspaces.refresh()` 同步新会话列表，且 `uiWorkspace.openSession` 在遇到 `unknown session` 时自动刷新轮询并重试切主对话，同时把切换异常显示在气泡下方不再静默吞掉。
+
+---
+
+## v0.8.1 (2026-11-23)
+
+### 新增与体验优化 (Added & Changed)
+- **秘书席实时动态进度条、秒表计时与运行中直达**：右侧内阁看板的秘书席（含极简 1+1 主脑）新增与工作组一致的红/黄/绿动态进度条 `CabinetProgressBar`、启动即刷新的当前动作说明、运行中实时跳动的 `已运行 mm:ss` 计时（完工后保留耗时），并在子会话创建就绪瞬间即可点击秘书名字进入子会话查看实时思考与进度；手动停止全部工作时同步复位秘书进度条与计时器。
+- **修复审验子会话“空白”问题（DeepSeek 等结构化输出模型）**：在 `TeamRuntime.runSeatTurn` 收到 `structured_output` 结论但模型因宿主直接结束回合而未输出可见文本气泡时，自动往该审验子会话补写一条可见展示记录（`plugin:cabinet-v2/speech`），完整呈现审验结论与意见正文，零额外模型调用与 Token 消耗。
+- **按席位独立的「精简 / 适中 / 详尽」三档篇幅开关**：在所有设计席、组长汇报席与秘书席的卡片右下角（右侧边缘纵向标签的左下侧）独立增设薄阴影三档循环按钮，默认「精简」（绿），单击依次切换「适中」（黄）→「详尽」（红）→「精简」（绿），切换不破坏当前预设模式；编排器按各席独立档位注入对应篇幅约束（审验组员保持放开深度挑错，不加篇幅限制）。
+
+---
+
+## v0.8.0 (2026-11-23)
+
+### 新增与核心架构升级 (Added & Changed)
+- **单模型 ↔ 内阁双向上下文互通**：切入内阁模式时自动按时间顺序汇总本对话前序单模型问答、既有内阁汇报与施工实证（严格遵循已剪枝内容）传给各席位，不再需要人工复制粘贴前文；切回单模型模式时解除原有的 2600 字硬截断，将最新一轮内阁完整交付报告、施工实证摘要与更早轮次摘要完整注入单模型上下文。
+- **默认交付后切回单模型 +「持续以内阁模式工作」状态锁**：默认 `stayInCabinet = false`，本轮内阁交付完自动切回单模型并记住上次排席，通过主输入框左下角拆分药丸（左半区一键切内阁/回单模型，右半区 `⚙` 打开排席画布）与汇报卡片底栏随时一键互切；若需多轮连续用内阁推进，可在排席画布或右侧内阁面板勾上「持续以内阁模式工作」状态锁，新发消息自动开跑下一轮并继承前文。
+- **极简模式重构为 1+1 主脑架构（Plan / Act）**：极简模式调整为「1 名施工力工 + 必配秘书主脑」，由秘书主脑包揽方案设计、力工实证验收（保留 3 次局部返工与 3 轮外层熔断）并在主对话直接以主脑身份向用户汇报交流；兼容旧版 2 席极简存档自动迁移。
+- **各预设模式提示气泡与支出倍率提醒**：预设模式栏下方新增提示气泡，为极简、经典 3/9 席、头脑风暴、六国大封相与自由模式逐一提供 15～40 字直白说明与醒目的支出倍率标牌，明确推荐日常优先选用极简 1+1，避免高耗娱乐模式被误当作常态主力。
+- **设计席放开只读 Shell 探查权限**：设计席与极简主脑在设计阶段允许执行只读 Shell 命令（复用与审验席一致的写命令拦截规则，严禁任何改动命令），同时修正提示词中对空工作区的说明，不再闭眼猜测工程环境。
+- **严格白名单「幽灵对话」预扫描与顶栏一键清理**：彻底修正旧版清理把磁盘幽灵会话误当存活会话的问题——改为严格以 `workspaceRegistry` 中的活动工作区会话 + 回收站归档会话 + 活跃内存会话作为受保护白名单，精确识别并清理已脱离全部工作区的幽灵主对话、失主孤儿子会话（含废弃内阁记录）、失效历史/分支索引与旧版缓存目录；入口置顶到右侧内阁面板顶栏（「清理幽灵」）与设置页，点击先预览确切统计与白名单保护数量，确认后再执行。
+
+---
+
+## v0.7.0 (2026-11-23)
+
+### 新增与交互重构 (Added & Changed)
+- **主对话聊天流原地编辑与分支切换**：无论是内阁模式下的用户任务气泡，还是普通单模型对话中的原生历史用户消息气泡，现在都在气泡**右下方**直接提供「编辑」小按钮与分叉锚点 `◀ 1 / 2 ▶` 切换条；点击「编辑」后原地切换为预填原文的文本框，原位置变为「发送」与「取消」按钮，发送即可开辟洁净物理新分支并自动跳转运行，取消则无损恢复原气泡。
+- **主对话原地剪枝与直达讨论过程**：普通单模型 AI 回复与内阁交付/汇报卡片均在右下方统一提供「剪枝」（原地修改正文、对比原版、一键还原）；内阁交付卡片右下方新增「讨论过程」按钮，顺着聊天流看结论就能直接展开并打开该次任务的各席位子会话。
+- **多设计并行淘汰晋级与报错跳过容错**：多设计提案一对一盲审改为「按提案逐一裁决」——过审提案直接晋级合稿唯一《施工蓝图》，淘汰提案仅作为避坑警示供参考，不再因个别较差方案连坐全组重跑或卡死熔断（仅全部提案未通过时才退回设计组修订；单设计席与施工实证审验仍严格保持原有底线）；多席并行设计/审验阶段若个别席位接口报错，自动标红跳过并用其余成功席位继续推进。
+- **侧边栏回归轻量进度面板与一键清理**：彻底移除侧边栏底部的分支编辑列表、上下文剪枝列表、冗长折叠历史抽屉，以及设置页/配置弹窗里的多步下拉清理组件（`CabinetCompletedTasks`）；统一在侧边栏底部与设置页提供一个「清理失效记录与缓存」一键按钮，直接清理已删主对话遗留的孤儿子会话、失效索引与旧版冗余缓存。
+
+### 底层修复 (Fixed)
+- **修复物理分支 v4 日志格式与轮次边界截断**：对齐 DSH Session v4 原生顶层 header 格式（无 `seq`/`data` 嵌套，业务事件从 `seq: 0` 起编号），并将前缀截断对齐到分叉消息所在 `turn/start`（及入队 `agent/inbox/spliced`）之前，避免新分支末尾残留未闭合轮次；同步适配 `workspaceRegistry.entities` 完成新分支在当前工作区的显式注册。
+- **修复普通单模型 AI 回复剪枝找不到原始事件**：放行原生 v4 `assistant/message` 自带的 `surfaceOp: "append"`，仅排除 `surfaceOp.op === "replace"` 与 `sourceEventSeqs` 替换事件。
+
+---
+
 ## v0.6.2 (2026-11-21)
 
 ### 修复与增强 (Fixed & Changed)
-- **思考档位 400 协议不兼容自动降级自愈**：在 `TeamRuntime` 中新增 `isThinkingParameterRejection` 精确识别中转网关对 `thinking` / `reasoning_effort` / `adaptive thinking` / `between_tools` 的 400 拒绝报错；命中时当场剥离 `reasoningEffort`（`omit thinking`）单次重发并记入进程内 `effortFallbackModels` 缓存，后续阶段直接免参数直通（非思考类错误绝不重试）。
-- **清理 `claude-sonnet-5-5` 固定档位**：移除 `cordis.patch.yml` 中 `lanyiapi/claude-sonnet-5-5` 过时的 `low` 声明，并将母本 `saved-plan.json` 对应席位归零为「默认」档位。
+- **思考档位 400 协议不兼容自动降级自愈**：在 `TeamRuntime` 中新增 `isThinkingParameterRejection`，识别中转网关对 `thinking` / `reasoning_effort` / `adaptive thinking` / `between_tools` 的 400 拒绝报错；命中时当场剥离 `reasoningEffort` 单次重发并记入进程内 `effortFallbackModels` 缓存，后续阶段直接免参数直通（非思考类错误不重试）。
+- **清理旧版固定思考档位**：移除旧版配置中过时的固定 `low` 思考档位声明，并将母本 `saved-plan.json` 对应席位归零为「默认」档位。
 
 ---
 
